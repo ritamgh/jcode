@@ -222,6 +222,57 @@ pub fn openai_compatible_profile_static_models(profile: OpenAiCompatibleProfile)
     models
 }
 
+pub fn openai_compatible_profile_cached_models(profile: OpenAiCompatibleProfile) -> Vec<String> {
+    let sanitized: String = profile
+        .id
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+        .collect();
+    if sanitized.is_empty() {
+        return Vec::new();
+    }
+
+    let Some(path) = dirs::home_dir().map(|home| {
+        home.join(".jcode")
+            .join("cache")
+            .join(format!("{}_models.json", sanitized))
+    }) else {
+        return Vec::new();
+    };
+
+    let Ok(content) = std::fs::read_to_string(path) else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(&content) else {
+        return Vec::new();
+    };
+
+    value
+        .get("models")
+        .and_then(|models| models.as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|model| model.get("id").and_then(|id| id.as_str()))
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(ToString::to_string)
+        .collect()
+}
+
+pub fn openai_compatible_profile_has_model(profile: OpenAiCompatibleProfile, model: &str) -> bool {
+    let model = model.trim();
+    if model.is_empty() {
+        return false;
+    }
+
+    openai_compatible_profile_static_models(profile)
+        .iter()
+        .any(|candidate| candidate == model)
+        || openai_compatible_profile_cached_models(profile)
+            .iter()
+            .any(|candidate| candidate == model)
+}
+
 pub fn openai_compatible_profile_static_context_limits(
     profile: OpenAiCompatibleProfile,
 ) -> HashMap<String, usize> {

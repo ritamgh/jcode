@@ -1078,10 +1078,7 @@ impl App {
             if !crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
                 continue;
             }
-            if !crate::provider_catalog::openai_compatible_profile_static_models(profile)
-                .iter()
-                .any(|candidate| candidate == model)
-            {
+            if !crate::provider_catalog::openai_compatible_profile_has_model(profile, model) {
                 continue;
             }
             let resolved = crate::provider_catalog::resolve_openai_compatible_profile(profile);

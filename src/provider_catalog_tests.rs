@@ -119,6 +119,30 @@ fn auth_issue_runtime_display_name_tracks_direct_compatible_profiles() {
 }
 
 #[test]
+fn cached_openai_compatible_models_are_recognized_for_profile_routing() {
+    let _lock = crate::storage::lock_test_env();
+    let _guard = EnvGuard::save(&["HOME"]);
+    let home = tempfile::tempdir().expect("temp home");
+    let cache_dir = home.path().join(".jcode").join("cache");
+    std::fs::create_dir_all(&cache_dir).expect("cache dir");
+    std::fs::write(
+        cache_dir.join("opencode-go_models.json"),
+        r#"{"cached_at":1778075920,"models":[{"id":"deepseek-v4-pro"}]}"#,
+    )
+    .expect("model cache");
+    crate::env::set_var("HOME", home.path().to_string_lossy().as_ref());
+
+    assert!(openai_compatible_profile_has_model(
+        OPENCODE_GO_PROFILE,
+        "deepseek-v4-pro"
+    ));
+    assert!(!openai_compatible_profile_has_model(
+        OPENCODE_PROFILE,
+        "deepseek-v4-pro"
+    ));
+}
+
+#[test]
 fn matrix_login_provider_ids_and_aliases_are_unique() {
     let mut seen = std::collections::HashSet::new();
     for provider in login_providers() {
