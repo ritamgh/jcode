@@ -114,14 +114,13 @@ fn ghostty_tab_shell_script(command: &TerminalCommand, cwd: &Path) -> String {
         shell
     );
     let typed_command = applescript_string_literal(&typed_command);
-    let fallback_shell = sh_escape(&shell);
 
     format!(
         r#"/usr/bin/osascript <<'APPLESCRIPT'
 tell application "Ghostty" to activate
 delay 0.05
 tell application "System Events"
-    tell process "Ghostty"
+    tell process "ghostty"
         keystroke "t" using command down
         delay 0.08
         keystroke {typed_command}
@@ -129,11 +128,6 @@ tell application "System Events"
     end tell
 end tell
 APPLESCRIPT
-status=$?
-if [ "$status" -ne 0 ]; then
-    /usr/bin/open -na Ghostty --args -e /bin/bash -lc {fallback_shell}
-fi
-exit 0
 "#,
     )
 }
@@ -422,7 +416,7 @@ mod tests {
 
     #[test]
     #[cfg(target_os = "macos")]
-    fn ghostty_spawn_uses_adjacent_tab_applescript_with_open_fallback() {
+    fn ghostty_spawn_uses_adjacent_tab_applescript_without_new_window_fallback() {
         let command = TerminalCommand::new(
             "/tmp/jcode binary",
             vec![
@@ -443,9 +437,10 @@ mod tests {
         assert_eq!(args[0], "-lc");
         let script = &args[1];
         assert!(script.contains("keystroke \"t\" using command down"));
+        assert!(script.contains("tell process \"ghostty\""));
         assert!(script.contains("cd '/tmp/jcode cwd' && exec '/tmp/jcode binary'"));
         assert!(script.contains("--resume"));
         assert!(script.contains("session_quote"));
-        assert!(script.contains("/usr/bin/open -na Ghostty --args"));
+        assert!(!script.contains("/usr/bin/open -na Ghostty"));
     }
 }

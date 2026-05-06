@@ -1447,13 +1447,13 @@ impl App {
         if spawned > 0 && failed.is_empty() {
             if names.len() == 1 {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Resumed **{}** in new window.",
+                    "Resumed **{}** in new tab/window.",
                     names[0],
                 )));
                 self.set_status_notice(format!("Resumed {}", names[0]));
             } else {
                 self.push_display_message(DisplayMessage::system(format!(
-                    "Resumed **{} sessions** in new windows: {}.",
+                    "Resumed **{} sessions** in new tabs/windows: {}.",
                     names.len(),
                     names.join(", "),
                 )));
@@ -1466,7 +1466,7 @@ impl App {
 
         if spawned > 0 {
             self.push_display_message(DisplayMessage::system(format!(
-                "Resumed **{} session(s)** in new windows. {} failed:\n```\n{}\n```",
+                "Resumed **{} session(s)** in new tabs/windows. {} failed:\n```\n{}\n```",
                 spawned,
                 failed.len(),
                 manual.join("\n")
@@ -1591,7 +1591,7 @@ impl App {
 
         if spawned > 0 && failed.is_empty() {
             self.push_display_message(DisplayMessage::system(format!(
-                "Restored {} crashed session(s) in new windows.",
+                "Restored {} crashed session(s) in new tabs/windows.",
                 spawned
             )));
             self.set_status_notice(format!("Restored {} session(s)", spawned));
@@ -1601,7 +1601,7 @@ impl App {
                 .map(|id| format!("  jcode --resume {}", id))
                 .collect();
             self.push_display_message(DisplayMessage::system(format!(
-                "Restored {} session(s) in new windows. {} failed:\n```\n{}\n```",
+                "Restored {} session(s) in new tabs/windows. {} failed:\n```\n{}\n```",
                 spawned,
                 failed.len(),
                 manual.join("\n")
