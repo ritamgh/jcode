@@ -239,6 +239,58 @@ async fn messages_for_provider_replays_persisted_native_compaction_in_auto_mode(
 }
 
 #[tokio::test]
+async fn messages_for_provider_applies_manager_compaction_for_native_auto_provider() {
+    let provider: Arc<dyn Provider> = Arc::new(NativeAutoCompactionProvider);
+    let registry = Registry::new(provider.clone()).await;
+    let mut agent = Agent::new(provider, registry);
+
+    agent.add_message(
+        Role::User,
+        vec![ContentBlock::Text {
+            text: "first".to_string(),
+            cache_control: None,
+        }],
+    );
+    agent.add_message(
+        Role::Assistant,
+        vec![ContentBlock::Text {
+            text: "second".to_string(),
+            cache_control: None,
+        }],
+    );
+
+    let state = crate::session::StoredCompactionState {
+        summary_text: "manual compact summary".to_string(),
+        openai_encrypted_content: None,
+        covers_up_to_turn: 1,
+        original_turn_count: 1,
+        compacted_count: 1,
+    };
+    {
+        let compaction = agent.registry.compaction();
+        let mut manager = compaction.write().await;
+        manager.restore_persisted_stored_state_with(&state, &agent.session.messages);
+    }
+    assert!(agent.session.compaction.is_none());
+
+    let (messages, _event) = agent.messages_for_provider();
+    let summary_text = messages
+        .iter()
+        .flat_map(|message| &message.content)
+        .find_map(|block| match block {
+            ContentBlock::Text { text, .. } if text.contains("manual compact summary") => {
+                Some(text)
+            }
+            _ => None,
+        })
+        .expect("compacted summary text should be included");
+    assert!(
+        summary_text.contains("Previous Conversation Summary"),
+        "unexpected summary text: {summary_text}"
+    );
+}
+
+#[tokio::test]
 async fn oversized_openai_native_compaction_is_persisted_as_text_fallback() {
     let provider: Arc<dyn Provider> = Arc::new(NativeAutoCompactionProvider);
     let registry = Registry::new(provider.clone()).await;
@@ -288,7 +340,10 @@ async fn oversized_openai_native_compaction_is_persisted_as_text_fallback() {
     }));
     match &messages[0].content[0] {
         ContentBlock::Text { text, .. } => {
-            assert!(text.contains("Previous Conversation Summary"));
+            assert!(
+                text.contains("Previous Conversation Summary"),
+                "unexpected summary text: {text}"
+            );
             assert!(text.contains("OpenAI native compaction state was discarded"));
         }
         other => panic!("expected text fallback summary, got {other:?}"),
