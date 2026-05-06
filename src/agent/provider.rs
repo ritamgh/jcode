@@ -37,12 +37,18 @@ impl Agent {
         self.registry.clone()
     }
 
+    pub fn compaction_manager(
+        &self,
+    ) -> Arc<tokio::sync::RwLock<crate::compaction::CompactionManager>> {
+        self.registry.compaction()
+    }
+
     pub async fn compaction_mode(&self) -> crate::config::CompactionMode {
-        self.registry.compaction().read().await.mode()
+        self.compaction_manager().read().await.mode()
     }
 
     pub async fn set_compaction_mode(&self, mode: crate::config::CompactionMode) -> Result<()> {
-        let compaction = self.registry.compaction();
+        let compaction = self.compaction_manager();
         let mut manager = compaction.write().await;
         manager.set_mode(mode);
         Ok(())

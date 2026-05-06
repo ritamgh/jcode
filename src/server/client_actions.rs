@@ -809,7 +809,7 @@ pub(super) fn handle_compact(
         let mut agent_guard = agent.lock().await;
         let session_id = agent_guard.session_id().to_string();
         let provider = agent_guard.provider_fork();
-        let compaction = agent_guard.registry().compaction();
+        let compaction = agent_guard.compaction_manager();
         let messages = agent_guard.provider_messages();
         drop(agent_guard);
 
