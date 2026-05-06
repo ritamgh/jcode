@@ -1585,6 +1585,52 @@ async fn handle_remote_key_internal(
                     return Ok(());
                 }
 
+                if trimmed == "/rename" || trimmed.starts_with("/rename ") {
+                    let title = trimmed.strip_prefix("/rename").unwrap_or_default().trim();
+                    if title.is_empty() {
+                        app.push_display_message(DisplayMessage::error(
+                            "Usage: `/rename <session name>` or `/rename --clear`".to_string(),
+                        ));
+                        return Ok(());
+                    }
+
+                    if title == "--clear" {
+                        if let Err(e) = persist_remote_session_metadata(app, |session| {
+                            session.rename_title(None);
+                        }) {
+                            app.push_display_message(DisplayMessage::error(format!(
+                                "Failed to clear session name: {}",
+                                e
+                            )));
+                            return Ok(());
+                        }
+                        let name = app.session.display_name().to_string();
+                        app.push_display_message(DisplayMessage::system(format!(
+                            "Cleared custom name for session **{}**.",
+                            name,
+                        )));
+                        app.set_status_notice("Session name cleared");
+                        return Ok(());
+                    }
+
+                    let new_title = title.to_string();
+                    if let Err(e) = persist_remote_session_metadata(app, |session| {
+                        session.rename_title(Some(new_title.clone()));
+                    }) {
+                        app.push_display_message(DisplayMessage::error(format!(
+                            "Failed to rename session: {}",
+                            e
+                        )));
+                        return Ok(());
+                    }
+                    app.push_display_message(DisplayMessage::system(format!(
+                        "Renamed session to **{}**.",
+                        title,
+                    )));
+                    app.set_status_notice("Session renamed");
+                    return Ok(());
+                }
+
                 if trimmed == "/split" {
                     app.push_display_message(DisplayMessage::system(
                         "Splitting session...".to_string(),
