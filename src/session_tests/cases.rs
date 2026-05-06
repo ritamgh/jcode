@@ -2,6 +2,20 @@ use super::*;
 use anyhow::{Result, anyhow};
 
 #[test]
+fn display_name_prefers_renamed_title_over_generated_short_name() {
+    let mut session =
+        Session::create_with_id("session_cat_1234567890_deadbeef".to_string(), None, None);
+
+    assert_eq!(session.display_name(), "cat");
+
+    session.rename_title(Some("Jcode compact/model routing debug".to_string()));
+    assert_eq!(session.display_name(), "Jcode compact/model routing debug");
+
+    session.rename_title(None);
+    assert_eq!(session.display_name(), "cat");
+}
+
+#[test]
 fn test_session_exists_roundtrip() -> Result<()> {
     let tmp_dir = std::env::temp_dir().join(format!(
         "jcode-session-test-{}",

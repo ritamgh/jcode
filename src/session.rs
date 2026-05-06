@@ -885,10 +885,15 @@ impl Session {
         false
     }
 
-    /// Get the display name for this session (short memorable name if available)
+    /// Get the display name for this session.
+    ///
+    /// A user-provided title from `/rename` takes precedence so saved sessions,
+    /// session picker rows, and status messages use the name the user chose
+    /// instead of the generated memorable short name.
     pub fn display_name(&self) -> &str {
-        self.short_name
+        self.title
             .as_deref()
+            .or(self.short_name.as_deref())
             .or_else(|| extract_session_name(&self.id))
             .unwrap_or(&self.id)
     }
