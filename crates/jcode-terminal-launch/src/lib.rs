@@ -100,6 +100,44 @@ fn macos_should_try_app_terminal(term: &str) -> bool {
     }
 }
 
+#[cfg(target_os = "macos")]
+fn applescript_string_literal(text: &str) -> String {
+    format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+#[cfg(target_os = "macos")]
+fn ghostty_tab_shell_script(command: &TerminalCommand, cwd: &Path) -> String {
+    let shell = shell_command(&command_parts(command));
+    let typed_command = format!(
+        "cd {} && exec {}",
+        sh_escape(&cwd.display().to_string()),
+        shell
+    );
+    let typed_command = applescript_string_literal(&typed_command);
+    let fallback_shell = sh_escape(&shell);
+
+    format!(
+        r#"/usr/bin/osascript <<'APPLESCRIPT'
+tell application "Ghostty" to activate
+delay 0.05
+tell application "System Events"
+    tell process "Ghostty"
+        keystroke "t" using command down
+        delay 0.08
+        keystroke {typed_command}
+        key code 36
+    end tell
+end tell
+APPLESCRIPT
+status=$?
+if [ "$status" -ne 0 ]; then
+    /usr/bin/open -na Ghostty --args -e /bin/bash -lc {fallback_shell}
+fi
+exit 0
+"#,
+    )
+}
+
 #[cfg(unix)]
 pub fn detected_resume_terminal() -> Option<String> {
     if std::env::var("HANDTERM_SESSION").is_ok() || std::env::var("HANDTERM_PID").is_ok() {
@@ -268,14 +306,14 @@ fn build_spawn_command(term: &str, command: &TerminalCommand, cwd: &Path) -> Opt
         }
         #[cfg(target_os = "macos")]
         "ghostty" => {
-            let shell = shell_command(&command_parts(command));
-            cmd = Command::new("open");
+            let script = ghostty_tab_shell_script(command, cwd);
+            cmd = Command::new("/bin/sh");
             cmd.current_dir(cwd)
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
-                .args(["-na", "Ghostty", "--args", "-e", "/bin/bash", "-lc"])
-                .arg(shell);
+                .arg("-lc")
+                .arg(script);
             if command.fresh_spawn {
                 cmd.env("JCODE_FRESH_SPAWN", "1");
             }
@@ -380,5 +418,34 @@ mod tests {
         let shell = shell_command(&["jcode".to_string(), "it's ok".to_string()]);
         #[cfg(unix)]
         assert_eq!(shell, "'jcode' 'it'\"'\"'s ok'");
+    }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn ghostty_spawn_uses_adjacent_tab_applescript_with_open_fallback() {
+        let command = TerminalCommand::new(
+            "/tmp/jcode binary",
+            vec![
+                "--fresh-spawn".to_string(),
+                "--resume".to_string(),
+                "session_quote'123".to_string(),
+            ],
+        )
+        .fresh_spawn();
+        let cwd = Path::new("/tmp/jcode cwd");
+
+        let cmd = build_spawn_command("ghostty", &command, cwd).expect("ghostty command");
+        assert_eq!(cmd.get_program().to_string_lossy(), "/bin/sh");
+        let args = cmd
+            .get_args()
+            .map(|arg| arg.to_string_lossy().to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(args[0], "-lc");
+        let script = &args[1];
+        assert!(script.contains("keystroke \"t\" using command down"));
+        assert!(script.contains("cd '/tmp/jcode cwd' && exec '/tmp/jcode binary'"));
+        assert!(script.contains("--resume"));
+        assert!(script.contains("session_quote"));
+        assert!(script.contains("/usr/bin/open -na Ghostty --args"));
     }
 }

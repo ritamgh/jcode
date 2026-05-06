@@ -109,7 +109,10 @@ fn spawn_resume_in_new_terminal_uses_handterm_exec_mode() {
     assert!(launched);
 
     let lines = wait_for_lines(&output_path, 5);
-    assert_eq!(lines[0], cwd.to_string_lossy());
+    assert_eq!(
+        fs::canonicalize(&lines[0]).expect("canonical launched cwd"),
+        fs::canonicalize(&cwd).expect("canonical expected cwd")
+    );
     assert_eq!(lines[1], "--backend");
     assert_eq!(lines[2], "gpu");
     assert_eq!(lines[3], "--exec");
@@ -178,7 +181,10 @@ fn spawn_selfdev_in_new_terminal_uses_handterm_exec_mode() {
     assert!(launched);
 
     let lines = wait_for_lines(&output_path, 5);
-    assert_eq!(lines[0], cwd.to_string_lossy());
+    assert_eq!(
+        fs::canonicalize(&lines[0]).expect("canonical launched cwd"),
+        fs::canonicalize(&cwd).expect("canonical expected cwd")
+    );
     assert_eq!(lines[1], "--backend");
     assert_eq!(lines[2], "gpu");
     assert_eq!(lines[3], "--exec");
