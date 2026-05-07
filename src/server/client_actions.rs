@@ -873,6 +873,12 @@ pub(super) fn handle_compact(
 
         let result = match compaction.try_write() {
             Ok(mut manager) => {
+                // Collect any previously completed background compaction before
+                // checking status — otherwise a finished task from a prior
+                // /compact sits in "in progress" forever, blocking new requests.
+                manager.check_and_apply_compaction_with(&messages);
+                let _event = manager.take_compaction_event(); // consume stale event
+
                 let stats = manager.stats_with(&messages);
                 let status_msg = format!(
                     "**Context Status:**\n\

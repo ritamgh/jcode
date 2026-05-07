@@ -364,7 +364,7 @@ impl App {
     }
 
     pub(super) fn poll_compaction_completion(&mut self) -> bool {
-        if self.is_remote || !self.provider.uses_jcode_compaction() {
+        if self.is_remote || !self.provider.supports_compaction() {
             return false;
         }
         let provider_messages = self.materialized_provider_messages();

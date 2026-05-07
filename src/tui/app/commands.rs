@@ -1953,6 +1953,12 @@ pub(super) fn handle_config_command(app: &mut App, trimmed: &str) -> bool {
         match compaction.try_write() {
             Ok(mut manager) => {
                 let provider_messages = app.materialized_provider_messages();
+
+                // Collect any previously completed background compaction
+                // before checking status — see client_actions.rs for rationale.
+                manager.check_and_apply_compaction_with(&provider_messages);
+                let _event = manager.take_compaction_event();
+
                 let stats = manager.stats_with(&provider_messages);
                 let status_msg = format!(
                     "**Context Status:**\n\
