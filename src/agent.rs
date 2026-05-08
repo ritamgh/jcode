@@ -511,6 +511,22 @@ impl Agent {
         (messages, None)
     }
 
+    pub(crate) fn poll_compaction_event_for_current_session(&mut self) -> Option<CompactionEvent> {
+        if !self.provider.supports_compaction() && self.session.compaction.is_none() {
+            return None;
+        }
+
+        let provider_messages = self.session.provider_messages();
+        let compaction = self.registry.compaction();
+        let Ok(mut manager) = compaction.try_write() else {
+            return None;
+        };
+
+        let event = manager.poll_compaction_event_with(provider_messages)?;
+        self.sync_session_compaction_state_from_manager(&manager);
+        Some(event)
+    }
+
     fn record_client_cache_request(&mut self, messages: &[Message]) {
         if !self.should_track_client_cache() {
             return;

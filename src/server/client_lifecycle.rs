@@ -1177,6 +1177,25 @@ pub(super) async fn handle_client(
                             });
                         }
                     }
+                    Ok(BusEvent::CompactionFinished) => {
+                        let event = {
+                            let mut agent_guard = agent.lock().await;
+                            agent_guard.poll_compaction_event_for_current_session()
+                        };
+                        if let Some(event) = event {
+                            let _ = client_event_tx.send(ServerEvent::Compaction {
+                                trigger: event.trigger,
+                                pre_tokens: event.pre_tokens,
+                                post_tokens: event.post_tokens,
+                                tokens_saved: event.tokens_saved,
+                                duration_ms: event.duration_ms,
+                                messages_dropped: event.messages_dropped,
+                                messages_compacted: event.messages_compacted,
+                                summary_chars: event.summary_chars,
+                                active_messages: event.active_messages,
+                            });
+                        }
+                    }
                     _ => {}
                 }
                 continue;
