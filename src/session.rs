@@ -891,8 +891,9 @@ impl Session {
     /// session picker rows, and status messages use the name the user chose
     /// instead of the generated memorable short name.
     pub fn display_name(&self) -> &str {
-        self.title
+        self.custom_title
             .as_deref()
+            .or(self.title.as_deref())
             .or(self.short_name.as_deref())
             .or_else(|| extract_session_name(&self.id))
             .unwrap_or(&self.id)
