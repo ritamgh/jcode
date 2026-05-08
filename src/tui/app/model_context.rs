@@ -313,7 +313,7 @@ impl App {
     }
 
     pub(super) fn update_compaction_usage_from_stream(&mut self) {
-        if self.is_remote || !self.provider.uses_jcode_compaction() {
+        if self.is_remote || !self.provider.supports_compaction() {
             return;
         }
         let Some(tokens) = self.current_stream_context_tokens() else {
@@ -322,6 +322,9 @@ impl App {
         let compaction = self.registry.compaction();
         if let Ok(mut manager) = compaction.try_write() {
             manager.update_observed_input_tokens(tokens);
+            if self.provider.uses_jcode_compaction() {
+                manager.push_token_snapshot(tokens);
+            }
         };
     }
 

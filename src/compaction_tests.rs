@@ -263,6 +263,37 @@ async fn test_guard_between_80_and_95_starts_background_only() {
 }
 
 #[tokio::test]
+async fn test_proactive_mode_starts_from_token_snapshots_before_80_percent() {
+    let mut manager = CompactionManager::new().with_budget(1_000);
+    manager.set_mode(crate::config::CompactionMode::Proactive);
+
+    let mut messages = Vec::new();
+    for i in 0..20 {
+        messages.push(make_text_message(Role::User, &format!("msg {}", i)));
+        manager.notify_message_added();
+    }
+
+    // Ten snapshots satisfy the proactive cooldown and establish growth. The
+    // current context is only 68%, below the reactive 80% threshold, but the
+    // projected growth crosses 80%, so proactive compaction should start.
+    for tokens in [410, 440, 470, 500, 530, 560, 590, 620, 650, 680] {
+        manager.update_observed_input_tokens(tokens);
+        manager.push_token_snapshot(tokens);
+    }
+
+    let provider: Arc<dyn Provider> = Arc::new(MockSummaryProvider);
+    let action = manager.ensure_context_fits(&messages, provider);
+    assert_eq!(
+        action,
+        CompactionAction::BackgroundStarted {
+            trigger: "proactive".to_string()
+        },
+        "proactive mode should start background compaction from token snapshots before the reactive threshold"
+    );
+    assert!(manager.is_compacting());
+}
+
+#[tokio::test]
 async fn test_guard_at_95_triggers_hard_compact() {
     let mut manager = CompactionManager::new().with_budget(1_000);
     let mut messages = Vec::new();

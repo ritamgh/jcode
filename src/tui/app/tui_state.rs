@@ -544,7 +544,7 @@ impl crate::tui::TuiState for App {
 
     fn status_notice(&self) -> Option<String> {
         if !self.is_remote
-            && self.provider.uses_jcode_compaction()
+            && self.provider.supports_compaction()
             && let Ok(manager) = self.registry.compaction().try_read()
             && manager.is_compacting()
         {
@@ -666,7 +666,7 @@ impl crate::tui::TuiState for App {
                 }
             }
         } else {
-            let skip = if self.provider.uses_jcode_compaction() {
+            let skip = if self.provider.supports_compaction() {
                 let compaction = self.registry.compaction();
                 let result = compaction
                     .try_read()
@@ -1068,7 +1068,7 @@ impl crate::tui::TuiState for App {
             ambient_info: gather_ambient_info(crate::config::config().ambient.enabled),
             observed_context_tokens: self.current_stream_context_tokens(),
             cache_hit_info,
-            is_compacting: if !self.is_remote && self.provider.uses_jcode_compaction() {
+            is_compacting: if !self.is_remote && self.provider.supports_compaction() {
                 let compaction = self.registry.compaction();
                 compaction
                     .try_read()

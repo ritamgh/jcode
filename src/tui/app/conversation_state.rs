@@ -205,7 +205,7 @@ impl App {
             self.ensure_provider_messages_hydrated();
             self.messages.push(message.clone());
         }
-        if self.is_remote || !self.provider.uses_jcode_compaction() {
+        if self.is_remote || !self.provider.supports_compaction() {
             return;
         }
         let compaction = self.registry.compaction();
@@ -238,7 +238,7 @@ impl App {
 
     pub(super) fn reseed_compaction_from_provider_messages(&mut self) {
         if self.is_remote
-            || (!self.provider.uses_jcode_compaction() && self.session.compaction.is_none())
+            || (!self.provider.supports_compaction() && self.session.compaction.is_none())
         {
             return;
         }
@@ -327,7 +327,7 @@ impl App {
             return (self.messages.clone(), None);
         }
         let base_messages = self.materialized_provider_messages();
-        if !self.provider.uses_jcode_compaction() && self.session.compaction.is_none() {
+        if !self.provider.supports_compaction() && self.session.compaction.is_none() {
             return (base_messages, None);
         }
         let compaction = self.registry.compaction();
@@ -349,7 +349,7 @@ impl App {
                     }
                 }
                 let messages = manager.messages_for_api_with(&base_messages);
-                let event = if self.provider.uses_jcode_compaction() {
+                let event = if self.provider.supports_compaction() {
                     manager.take_compaction_event()
                 } else {
                     None
