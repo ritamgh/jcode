@@ -210,7 +210,7 @@ fn test_handle_server_event_compaction_shows_completion_message_in_remote_mode()
     app.session.provider_session_id = Some("provider-session".to_string());
     app.context_warning_shown = true;
 
-    app.handle_server_event(
+    let needs_redraw = app.handle_server_event(
         crate::protocol::ServerEvent::Compaction {
             trigger: "semantic".to_string(),
             pre_tokens: Some(12_345),
@@ -224,6 +224,8 @@ fn test_handle_server_event_compaction_shows_completion_message_in_remote_mode()
         },
         &mut remote,
     );
+
+    assert!(needs_redraw, "remote compaction completion must redraw immediately");
 
     assert!(app.provider_session_id.is_none());
     assert!(app.session.provider_session_id.is_none());

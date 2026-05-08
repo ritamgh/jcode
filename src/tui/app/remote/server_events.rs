@@ -1213,7 +1213,7 @@ pub(in crate::tui::app) fn handle_server_event(
                 summary_chars,
                 active_messages,
             });
-            false
+            true
         }
         ServerEvent::SplitResponse {
             new_session_id,
@@ -1326,7 +1326,7 @@ pub(in crate::tui::app) fn handle_server_event(
                 app.push_display_message(DisplayMessage::system(message));
                 app.set_status_notice("Compaction failed");
             }
-            false
+            true
         }
         ServerEvent::StdinRequest { .. } => {
             app.set_status_notice("⌨ Interactive terminal detected (command will timeout)");
