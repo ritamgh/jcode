@@ -570,6 +570,25 @@ pub struct FeatureConfig {
     pub swarm: bool,
     /// Inject timestamps into user messages and tool results sent to the model (default: true)
     pub message_timestamps: bool,
+    /// Maximum number of relevant memories to inject into the model context per turn
+    /// (default: 5). Set to 0 to disable memory injection entirely.
+    pub memory_max_injection: usize,
+    /// Losslessly spill oversized historical tool results to disk and keep compact previews in history.
+    pub tool_result_spill_enabled: bool,
+    /// Tool result inline byte threshold before historical outputs are spilled.
+    pub tool_result_inline_threshold_bytes: usize,
+    /// Bytes kept from the start of a spilled tool result preview.
+    pub tool_result_preview_head_bytes: usize,
+    /// Bytes kept from the end of a spilled tool result preview.
+    pub tool_result_preview_tail_bytes: usize,
+    /// Preserve full current-turn tool results until the model has had a chance to consume them.
+    pub tool_result_keep_full_current_turn: bool,
+    /// Compact oversized historical tool results immediately before provider sends.
+    pub tool_result_provider_guard: bool,
+    /// Enable the read_tool_artifact rehydration tool.
+    pub tool_result_rehydrate_enabled: bool,
+    /// Optional artifact root. Defaults to ~/.jcode/tool-artifacts.
+    pub tool_result_artifact_dir: Option<String>,
     /// Update channel: "stable" (releases only) or "main" (latest commits)
     pub update_channel: UpdateChannel,
 }
@@ -580,6 +599,15 @@ impl Default for FeatureConfig {
             memory: true,
             swarm: true,
             message_timestamps: true,
+            memory_max_injection: 5,
+            tool_result_spill_enabled: true,
+            tool_result_inline_threshold_bytes: 4096,
+            tool_result_preview_head_bytes: 1536,
+            tool_result_preview_tail_bytes: 1536,
+            tool_result_keep_full_current_turn: true,
+            tool_result_provider_guard: true,
+            tool_result_rehydrate_enabled: true,
+            tool_result_artifact_dir: None,
             update_channel: UpdateChannel::default(),
         }
     }

@@ -78,6 +78,7 @@ pub mod telemetry;
 pub mod terminal_launch;
 pub mod todo;
 pub mod tool;
+pub mod tool_artifacts;
 pub mod transport;
 pub mod tui;
 pub mod update;
