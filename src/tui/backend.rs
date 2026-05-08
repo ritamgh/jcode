@@ -620,6 +620,20 @@ impl RemoteConnection {
         self.send_request(request).await
     }
 
+    /// Save/bookmark the server-owned active session with an optional label.
+    pub async fn save_session(&mut self, label: Option<String>) -> Result<()> {
+        let id = self.next_request_id;
+        self.next_request_id += 1;
+        self.send_request(Request::SaveSession { id, label }).await
+    }
+
+    /// Remove the saved/bookmark marker from the server-owned active session.
+    pub async fn unsave_session(&mut self) -> Result<()> {
+        let id = self.next_request_id;
+        self.next_request_id += 1;
+        self.send_request(Request::UnsaveSession { id }).await
+    }
+
     /// Inject externally transcribed text into the active remote TUI session.
     pub async fn send_transcript(
         &mut self,

@@ -646,6 +646,16 @@ impl Agent {
         &self.session.id
     }
 
+    pub fn mark_session_saved(&mut self, label: Option<String>) -> anyhow::Result<()> {
+        self.session.mark_saved(label);
+        self.session.save()
+    }
+
+    pub fn unmark_session_saved(&mut self) -> anyhow::Result<()> {
+        self.session.unmark_saved();
+        self.session.save()
+    }
+
     /// Mark this agent session as closed and persist it.
     pub fn mark_closed(&mut self) {
         crate::telemetry::end_session_with_reason(

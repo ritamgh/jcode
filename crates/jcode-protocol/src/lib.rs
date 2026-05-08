@@ -282,6 +282,14 @@ pub enum Request {
         title: Option<String>,
     },
 
+    /// Save/bookmark the current session with an optional label.
+    #[serde(rename = "save_session")]
+    SaveSession { id: u64, label: Option<String> },
+
+    /// Remove the saved/bookmark marker from the current session.
+    #[serde(rename = "unsave_session")]
+    UnsaveSession { id: u64 },
+
     /// Split the current session — clone conversation into a new session
     #[serde(rename = "split")]
     Split { id: u64 },
@@ -1884,6 +1892,8 @@ impl Request {
             Request::SetFeature { id, .. } => *id,
             Request::SetCompactionMode { id, .. } => *id,
             Request::RenameSession { id, .. } => *id,
+            Request::SaveSession { id, .. } => *id,
+            Request::UnsaveSession { id } => *id,
             Request::Split { id } => *id,
             Request::Transfer { id } => *id,
             Request::Compact { id } => *id,

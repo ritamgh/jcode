@@ -1512,15 +1512,14 @@ async fn handle_remote_key_internal(
                     } else {
                         Some(label.to_string())
                     };
-                    if let Err(e) = persist_remote_session_metadata(app, |session| {
-                        session.mark_saved(label.clone());
-                    }) {
+                    if let Err(e) = remote.save_session(label.clone()).await {
                         app.push_display_message(DisplayMessage::error(format!(
                             "Failed to save session: {}",
                             e
                         )));
                         return Ok(());
                     }
+                    app.session.mark_saved(label.clone());
                     if app.memory_enabled
                         && let Err(err) = remote.trigger_memory_extraction().await
                     {
@@ -1547,15 +1546,14 @@ async fn handle_remote_key_internal(
                 }
 
                 if trimmed == "/unsave" {
-                    if let Err(e) = persist_remote_session_metadata(app, |session| {
-                        session.unmark_saved();
-                    }) {
+                    if let Err(e) = remote.unsave_session().await {
                         app.push_display_message(DisplayMessage::error(format!(
-                            "Failed to save session: {}",
+                            "Failed to remove bookmark: {}",
                             e
                         )));
                         return Ok(());
                     }
+                    app.session.unmark_saved();
                     let name = app.session.display_name().to_string();
                     app.push_display_message(DisplayMessage::system(format!(
                         "Removed bookmark from session **{}**.",
@@ -1582,52 +1580,6 @@ async fn handle_remote_key_internal(
 
                     remote.rename_session(Some(title.to_string())).await?;
                     app.set_status_notice("Renaming session...");
-                    return Ok(());
-                }
-
-                if trimmed == "/rename" || trimmed.starts_with("/rename ") {
-                    let title = trimmed.strip_prefix("/rename").unwrap_or_default().trim();
-                    if title.is_empty() {
-                        app.push_display_message(DisplayMessage::error(
-                            "Usage: `/rename <session name>` or `/rename --clear`".to_string(),
-                        ));
-                        return Ok(());
-                    }
-
-                    if title == "--clear" {
-                        if let Err(e) = persist_remote_session_metadata(app, |session| {
-                            session.rename_title(None);
-                        }) {
-                            app.push_display_message(DisplayMessage::error(format!(
-                                "Failed to clear session name: {}",
-                                e
-                            )));
-                            return Ok(());
-                        }
-                        let name = app.session.display_name().to_string();
-                        app.push_display_message(DisplayMessage::system(format!(
-                            "Cleared custom name for session **{}**.",
-                            name,
-                        )));
-                        app.set_status_notice("Session name cleared");
-                        return Ok(());
-                    }
-
-                    let new_title = title.to_string();
-                    if let Err(e) = persist_remote_session_metadata(app, |session| {
-                        session.rename_title(Some(new_title.clone()));
-                    }) {
-                        app.push_display_message(DisplayMessage::error(format!(
-                            "Failed to rename session: {}",
-                            e
-                        )));
-                        return Ok(());
-                    }
-                    app.push_display_message(DisplayMessage::system(format!(
-                        "Renamed session to **{}**.",
-                        title,
-                    )));
-                    app.set_status_notice("Session renamed");
                     return Ok(());
                 }
 

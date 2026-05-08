@@ -627,6 +627,55 @@ pub(super) async fn handle_rename_session(
     let _ = client_event_tx.send(ServerEvent::Done { id });
 }
 
+pub(super) async fn handle_save_session(
+    id: u64,
+    label: Option<String>,
+    agent: &Arc<Mutex<Agent>>,
+    client_event_tx: &mpsc::UnboundedSender<ServerEvent>,
+) {
+    let result = {
+        let mut agent_guard = agent.lock().await;
+        agent_guard.mark_session_saved(label)
+    };
+    match result {
+        Ok(()) => {
+            crate::tui::session_picker::invalidate_session_list_cache();
+            let _ = client_event_tx.send(ServerEvent::Done { id });
+        }
+        Err(error) => {
+            let _ = client_event_tx.send(ServerEvent::Error {
+                id,
+                message: format!("Failed to save session: {error}"),
+                retry_after_secs: None,
+            });
+        }
+    }
+}
+
+pub(super) async fn handle_unsave_session(
+    id: u64,
+    agent: &Arc<Mutex<Agent>>,
+    client_event_tx: &mpsc::UnboundedSender<ServerEvent>,
+) {
+    let result = {
+        let mut agent_guard = agent.lock().await;
+        agent_guard.unmark_session_saved()
+    };
+    match result {
+        Ok(()) => {
+            crate::tui::session_picker::invalidate_session_list_cache();
+            let _ = client_event_tx.send(ServerEvent::Done { id });
+        }
+        Err(error) => {
+            let _ = client_event_tx.send(ServerEvent::Error {
+                id,
+                message: format!("Failed to unsave session: {error}"),
+                retry_after_secs: None,
+            });
+        }
+    }
+}
+
 pub(super) async fn handle_trigger_memory_extraction(
     id: u64,
     agent: &Arc<Mutex<Agent>>,
