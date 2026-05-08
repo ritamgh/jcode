@@ -38,6 +38,7 @@ mod tests {
     #[test]
     fn compression_hook_is_lossless_without_external_compressor() {
         let messages: Vec<Message> = Vec::new();
-        assert_eq!(compress_messages_for_request(&messages), messages);
+        let compressed = compress_messages_for_request(&messages);
+        assert_eq!(compressed.len(), messages.len());
     }
 }
