@@ -476,6 +476,7 @@ impl Agent {
                         user_count,
                         assistant_count,
                     ));
+                    let messages = crate::interlang::compress_messages_for_request(&messages);
                     return (messages, event);
                 }
                 Err(_) => {
@@ -497,6 +498,7 @@ impl Agent {
             user_count,
             assistant_count,
         ));
+        let messages = crate::interlang::compress_messages_for_request(&messages);
         (messages, None)
     }
 

@@ -35,6 +35,7 @@ pub mod gmail;
 pub mod goal;
 pub mod id;
 pub mod import;
+pub mod interlang;
 pub mod logging;
 pub mod login_qr;
 pub mod mcp;
