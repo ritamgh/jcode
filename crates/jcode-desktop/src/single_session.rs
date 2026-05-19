@@ -6740,7 +6740,7 @@ fn session_info_inline_styled_lines(app: &SingleSessionApp) -> Vec<SingleSession
 
     let mut lines = vec![
         styled_line(
-            "╭─ session info · Ctrl+Shift+S/Esc close",
+            "╭─ session info · Ctrl+Shift+S/Alt+Shift+S/Esc close",
             SingleSessionLineStyle::OverlayTitle,
         ),
         styled_line(
@@ -7292,7 +7292,10 @@ const SINGLE_SESSION_HELP_SECTIONS: &[HelpSection] = &[
             ("Ctrl+Shift+Tab", "switch to previous model"),
             ("Alt+←/→", "change thinking level"),
             ("Ctrl+P/O", "open recent session switcher"),
-            ("Ctrl+Shift+S", "toggle inline session info/stats"),
+            (
+                "Ctrl+Shift+S / Alt+Shift+S",
+                "toggle inline session info/stats",
+            ),
         ],
     },
     HelpSection {

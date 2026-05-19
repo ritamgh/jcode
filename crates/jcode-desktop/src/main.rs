@@ -6789,6 +6789,11 @@ fn to_key_input(key: &Key, modifiers: ModifiersState) -> KeyInput {
             KeyInput::ToggleSessionInfo
         }
         Key::Character(text)
+            if modifiers.alt_key() && modifiers.shift_key() && text.eq_ignore_ascii_case("s") =>
+        {
+            KeyInput::ToggleSessionInfo
+        }
+        Key::Character(text)
             if modifiers.control_key()
                 && (text.eq_ignore_ascii_case("p") || text.eq_ignore_ascii_case("o")) =>
         {

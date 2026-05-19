@@ -4151,6 +4151,13 @@ fn desktop_maps_session_info_hotkey() {
         ),
         KeyInput::ToggleSessionInfo
     );
+    assert_eq!(
+        to_key_input(
+            &Key::Character("s".into()),
+            ModifiersState::ALT | ModifiersState::SHIFT
+        ),
+        KeyInput::ToggleSessionInfo
+    );
 }
 
 #[test]
