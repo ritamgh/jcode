@@ -23,6 +23,7 @@ mod multiedit;
 mod open;
 mod patch;
 mod read;
+mod read_tool_artifact;
 pub mod selfdev;
 mod session_search;
 mod side_panel;
@@ -157,6 +158,17 @@ impl Registry {
             let mut timings = Vec::new();
             let mut m = HashMap::new();
             Self::insert_tool_timed(&mut m, &mut timings, "read", read::ReadTool::new);
+            if crate::config::config()
+                .features
+                .tool_result_rehydrate_enabled
+            {
+                Self::insert_tool_timed(
+                    &mut m,
+                    &mut timings,
+                    "read_tool_artifact",
+                    read_tool_artifact::ReadToolArtifactTool::new,
+                );
+            }
             Self::insert_tool_timed(&mut m, &mut timings, "write", write::WriteTool::new);
             Self::insert_tool_timed(
                 &mut m,

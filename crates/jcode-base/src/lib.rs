@@ -70,6 +70,7 @@ pub mod telegram;
 pub mod telemetry;
 pub mod terminal_launch;
 pub mod todo;
+pub mod tool_artifacts;
 pub mod transport;
 pub mod usage;
 pub mod util;

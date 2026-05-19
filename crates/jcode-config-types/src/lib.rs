@@ -603,6 +603,22 @@ pub struct FeatureConfig {
     /// Persist auto-recalled memory injections into normal session history instead of sending
     /// them as request-only ephemeral suffix messages (default: false)
     pub persist_memory_injections: bool,
+    /// Losslessly spill oversized historical tool results to disk and keep compact previews in history.
+    pub tool_result_spill_enabled: bool,
+    /// Tool result inline byte threshold before historical outputs are spilled.
+    pub tool_result_inline_threshold_bytes: usize,
+    /// Bytes kept from the start of a spilled tool result preview.
+    pub tool_result_preview_head_bytes: usize,
+    /// Bytes kept from the end of a spilled tool result preview.
+    pub tool_result_preview_tail_bytes: usize,
+    /// Compact oversized historical tool results immediately before provider sends.
+    pub tool_result_provider_guard: bool,
+    /// Enable the read_tool_artifact rehydration tool.
+    pub tool_result_rehydrate_enabled: bool,
+    /// Optional artifact root. Defaults to ~/.jcode/tool-artifacts.
+    pub tool_result_artifact_dir: Option<String>,
+    /// Delete spilled tool artifacts older than this many days. Set 0 to disable GC.
+    pub tool_result_retention_days: u64,
     /// Update channel: "stable" (releases only) or "main" (latest commits)
     pub update_channel: UpdateChannel,
 }
@@ -614,6 +630,14 @@ impl Default for FeatureConfig {
             swarm: true,
             message_timestamps: true,
             persist_memory_injections: false,
+            tool_result_spill_enabled: true,
+            tool_result_inline_threshold_bytes: 32 * 1024,
+            tool_result_preview_head_bytes: 4096,
+            tool_result_preview_tail_bytes: 4096,
+            tool_result_provider_guard: true,
+            tool_result_rehydrate_enabled: true,
+            tool_result_artifact_dir: None,
+            tool_result_retention_days: 30,
             update_channel: UpdateChannel::default(),
         }
     }

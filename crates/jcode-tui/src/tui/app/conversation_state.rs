@@ -326,6 +326,14 @@ impl App {
         if self.is_remote {
             return (self.messages.clone(), None);
         }
+        if crate::config::config().features.tool_result_provider_guard {
+            let fresh_user_turn = crate::message::ends_with_fresh_user_turn(
+                &self.session.messages_for_provider_uncached(),
+            );
+            if fresh_user_turn {
+                let _ = self.session.spill_historical_tool_results();
+            }
+        }
         let base_messages = self.materialized_provider_messages();
         if !self.provider.supports_compaction() && self.session.compaction.is_none() {
             return (base_messages, None);

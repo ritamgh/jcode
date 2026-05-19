@@ -585,6 +585,15 @@ impl Agent {
     }
 
     fn messages_for_provider(&mut self) -> (Vec<Message>, Option<CompactionEvent>) {
+        if crate::config::config().features.tool_result_provider_guard {
+            let fresh_user_turn = crate::message::ends_with_fresh_user_turn(
+                &self.session.messages_for_provider_uncached(),
+            );
+            if fresh_user_turn {
+                let _ = self.session.spill_historical_tool_results();
+            }
+        }
+
         if self.provider.supports_compaction() || self.session.compaction.is_some() {
             let compaction = self.registry.compaction();
             match compaction.try_write() {

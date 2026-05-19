@@ -1351,6 +1351,33 @@ impl Session {
         self.provider_messages().to_vec()
     }
 
+    pub fn spill_historical_tool_results(&mut self) -> crate::tool_artifacts::SpillStats {
+        let cfg = crate::tool_artifacts::ToolResultSpillConfig::load();
+        let stats = crate::tool_artifacts::compact_historical_tool_results_in_stored_messages(
+            &self.id,
+            &mut self.messages,
+            &cfg,
+        );
+        if stats.count > 0 {
+            self.mark_memory_profile_dirty();
+            self.mark_messages_full_dirty();
+            self.reset_provider_messages_cache();
+            crate::logging::info(&format!(
+                "REQUEST_TOOL_BYTES session={} spill_count={} before={} after={} saved_pct={}",
+                self.id,
+                stats.count,
+                stats.original_bytes,
+                stats.inline_bytes,
+                if stats.original_bytes == 0 {
+                    0
+                } else {
+                    stats.saved_bytes() * 100 / stats.original_bytes
+                },
+            ));
+        }
+        stats
+    }
+
     /// Drop heavyweight transcript vectors after remote startup has rendered the
     /// optimistic local history. The authoritative transcript comes from the
     /// server once the connection is established, so keeping another owned copy
