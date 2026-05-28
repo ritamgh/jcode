@@ -421,8 +421,11 @@ impl Skill {
     /// Get the full prompt content for this skill
     pub fn get_prompt(&self) -> String {
         format!(
-            "# Skill: {}\n\n{}\n\n{}",
-            self.name, self.description, self.content
+            "# Skill: {}\n\n{}\n\n{}\n\n{}",
+            self.name,
+            self.description,
+            self.content,
+            jcode_skill_compatibility_prompt()
         )
     }
 
@@ -461,6 +464,10 @@ impl Skill {
             confidence: 1.0,
         }
     }
+}
+
+fn jcode_skill_compatibility_prompt() -> &'static str {
+    "## Jcode skill compatibility\n\nJcode does not expose Claude Code's `AskUserQuestion` tool. If this skill instructs you to call `AskUserQuestion`, ask the same decision brief as a normal assistant message and stop for the user's reply. Do not report the skill as blocked solely because `AskUserQuestion` is unavailable, and do not silently choose an option unless the skill explicitly authorizes auto-deciding."
 }
 
 fn build_skill_search_text(name: &str, description: &str, content: &str) -> String {
@@ -526,6 +533,21 @@ mod tests {
         assert!(entry.content.contains("/firefox-browser"));
         assert!(entry.content.contains("# Skill: firefox-browser"));
         assert_eq!(entry.source.as_deref(), Some("skill_registry"));
+    }
+
+    #[test]
+    fn skill_prompt_includes_jcode_ask_user_question_fallback() {
+        let skill = test_skill(
+            "office-hours",
+            "Interactive office-hours workflow",
+            "Use AskUserQuestion to choose startup or builder mode.",
+        );
+
+        let prompt = skill.get_prompt();
+
+        assert!(prompt.contains("Jcode does not expose Claude Code's `AskUserQuestion` tool"));
+        assert!(prompt.contains("ask the same decision brief as a normal assistant message"));
+        assert!(prompt.contains("do not silently choose an option"));
     }
 
     #[test]
