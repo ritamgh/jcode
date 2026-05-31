@@ -9,6 +9,9 @@ Jcode is a Rust workspace for the Jcode coding agent, with the TUI/CLI as the de
 - `crates/jcode-tui`: terminal UI, input handling, local/remote session flow, and interleaved/queued message handling.
 - `crates/jcode-desktop`: desktop app code. Do not default to this for TUI/root tasks.
 
+## Agent orchestration gotchas
+- The direct `subagent` tool lives in `crates/jcode-app-core/src/tool/task.rs`. It runs a child agent synchronously, but now bounds the wait with `timeout_secs` (default 300s) and returns a recoverable error containing the child session id if the child hangs. For long-running parallel work, prefer durable swarm sessions via `swarm spawn` / `swarm await_members`.
+
 ## Build and test
 - Prefer the coordinated self-dev workflow for this repo: `selfdev build target=tui`, `selfdev test command="cargo test ..."`, then `selfdev reload` after successful TUI builds.
 - Fallback local build: `scripts/dev_cargo.sh build --profile selfdev -p jcode --bin jcode` if available, otherwise `cargo build --profile selfdev -p jcode --bin jcode`.
