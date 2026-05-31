@@ -467,7 +467,7 @@ impl Skill {
 }
 
 fn jcode_skill_compatibility_prompt() -> &'static str {
-    "## Jcode skill compatibility\n\nJcode does not expose Claude Code's `AskUserQuestion` tool. If this skill instructs you to call `AskUserQuestion`, ask the same decision brief as a normal assistant message and stop for the user's reply. Do not report the skill as blocked solely because `AskUserQuestion` is unavailable, and do not silently choose an option unless the skill explicitly authorizes auto-deciding."
+    "## Jcode skill compatibility\n\nJcode does not expose Claude Code's `AskUserQuestion` tool. If this skill instructs you to call `AskUserQuestion`, ask the same decision brief as a normal assistant message and stop for the user's reply. Do not report the skill as blocked solely because `AskUserQuestion` is unavailable. Treat any user message that arrives after the decision brief, including interleaved input while you are still working, as the answer to that pending question. If the skill permits choosing a default after no reply, wait at least 300 seconds before doing so; never choose the default in the same assistant turn as the question. Do not silently choose an option unless the skill explicitly authorizes auto-deciding."
 }
 
 fn build_skill_search_text(name: &str, description: &str, content: &str) -> String {
@@ -547,7 +547,10 @@ mod tests {
 
         assert!(prompt.contains("Jcode does not expose Claude Code's `AskUserQuestion` tool"));
         assert!(prompt.contains("ask the same decision brief as a normal assistant message"));
-        assert!(prompt.contains("do not silently choose an option"));
+        assert!(prompt.contains("including interleaved input"));
+        assert!(prompt.contains("wait at least 300 seconds"));
+        assert!(prompt.contains("never choose the default in the same assistant turn"));
+        assert!(prompt.contains("silently choose an option"));
     }
 
     #[test]
